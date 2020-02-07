@@ -81,6 +81,31 @@ def station():
     return jsonify(all_stations)
 
 
+@app.route("/api/v1.0/tobs")
+def tobs():
+    # 
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    """Return a JSON list of Temperature Observations (tobs) from a year from the last data point"""
+    # Query Measurement for last date in dataset
+    max_date = session.query(func.max(Measurement.date)).first()
+    print(max_date)
+    session.close()
+
+    end_date = dtt.strptime(max_date[0],'%Y-%m-%d')
+    start_date = end_date - dt.timedelta(days=365)
+
+    # Query Measurement for temps from last year in dataset
+    results = session.query(Measurement.date, Measurement.tobs).filter(Measurement.date >= start_date).all()
+
+    # Convert list of tuples into normal list
+    tobs_prev_year = list(np.ravel(results))
+
+    return jsonify(tobs_prev_year)
+
+
+
 
 @app.route('/api/v1.0/<start_date>')
 def get_temps(start_date=None):
